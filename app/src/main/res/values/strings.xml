@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">PNRGatewayClient</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+
+    <string name="gateway_address_title">Gateway Address</string>
+    <string name="gateway_address_explainer"><![CDATA[The Apple phone number with which to send the SMS, in international format. Depends on your Android phone\'s carrier. AT&T phones use 28818773, many T-Mobile MVNOs use 28818773, etc. Find these in the iOS carrier bundle for your carrier (/System/Library/Carrier Bundles/[Your carrier]/carrier.plist and look for PhoneNumberRegistrationGatewayAddress)]]></string>
+    <string name="iphone_number_title">iPhone Phone Number</string>
+    <string name="iphone_number_explainer">Phone number of your iPhone, in international format</string>
+</resources>
