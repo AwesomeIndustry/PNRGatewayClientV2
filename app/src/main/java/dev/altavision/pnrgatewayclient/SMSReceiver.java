@@ -17,6 +17,8 @@ import android.widget.Toast;
 import androidx.core.app.NotificationCompat;
 import androidx.preference.PreferenceManager;
 
+import java.util.Random;
+
 public class SMSReceiver extends BroadcastReceiver {
 
     private SharedPreferences mPrefs = null;
@@ -64,8 +66,12 @@ public class SMSReceiver extends BroadcastReceiver {
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Set the notification priority
                 .addAction(R.drawable.ic_baseline_sim_card_24, "Copy", copyPendingIntent);
 
+
+        Random rand = new Random();
+
 // Create a unique notification ID for your notification
-        int notificationId = 1;
+//        int notificationId = (int) (System.currentTimeMillis() / 1000);
+        int notificationId = rand.nextInt(100000);
 
 // Build the notification and send it
         notificationManager.notify(notificationId, builder.build());
