@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -28,46 +29,39 @@ public class MainActivity extends AppCompatActivity {
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
-//        requestSmsPermission();
-
-
-
-
-
         ((Button) findViewById(R.id.send_req_sms_button)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
 
-//                    Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
-//                    startActivity(intent);
+                    Log.d(TAG, mPrefs.getString("gateway_address","none"));
 
+                    if (mPrefs.getString("gateway_address","").trim().equals("")) {
+                        Toast.makeText(MainActivity.this, "Error: Please set the gateway address in Settings", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
+                    //Extracts the push token from the log message
                     String rawTokenMessage = ((TextView) findViewById(R.id.push_token_field)).getText().toString();
-                    //Regex is \<([a-f0-9\ ]+)\>
                     String regex = "\\<([a-f0-9\\ ]+)\\>";
 
                     Pattern pattern = Pattern.compile(regex);
                     Matcher matcher = pattern.matcher(rawTokenMessage);
 
                     if (matcher.find()) {
-                        Log.d(TAG,"Match found at index " + matcher.start());
-
-                        Log.d(TAG,"Match group 1 " + matcher.group(1));
-//                        Log.d(TAG,"Match group 2 " + matcher.group(2));
 
                         String pushTokenCleaned = matcher.group(1).replaceAll("\\s", "").toUpperCase(); //Cleans up the push token so it's in the all-caps, no-spaces format
 
+                        //Generates a random request (r=) number
                         Random random = new Random();
                         long randomNum = (long) (random.nextDouble() * 10000000000L);
 
+                        //Builds the content of the REG-REQ SMS
                         String smsToSend = "REG-REQ?v=3;t="+pushTokenCleaned+";r="+randomNum;
 
-
+                        //Sends the SMS to the gateway address
                         SmsManager smsManager = SmsManager.getDefault();
                         smsManager.sendTextMessage(mPrefs.getString("gateway_address","none"), null, smsToSend, null, null);
-
-
 
                     } else {
                         Log.w(TAG,"Match not found.");
@@ -81,15 +75,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
-        ((Button) findViewById(R.id.smsbutton)).setOnClickListener(new View.OnClickListener() {
+        //Opens the settings screen on button click
+        ((Button) findViewById(R.id.settingsButton)).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 try {
 
                     Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
                     startActivity(intent);
-
-
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -98,9 +91,4 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-
-
-    //    private void requestSmsPermission() {
-////        permission = Manifest.permission.RECEIVE_SMS;
-//    }
 }

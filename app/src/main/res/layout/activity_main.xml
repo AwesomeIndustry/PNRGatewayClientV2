@@ -82,7 +82,7 @@
     </LinearLayout>
 
     <Button
-        android:id="@+id/smsbutton"
+        android:id="@+id/settingsButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"

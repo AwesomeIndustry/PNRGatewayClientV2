@@ -26,39 +26,31 @@ public class SMSReceiver extends BroadcastReceiver {
     public static void processResponseMessage(String messageBody, Context context) {
         //Runs when a REG-RESP message is received, either as a regular SMS or a PDU
 
-        // Get a reference to the NotificationManager service
+
+        //Sets up the notification channel
         NotificationManager notificationManager =
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
-
-// Create a unique channel ID for your notifications (required for Android 8.0+)
         String channelId = "pnr_response_channel";
-
-// Create a NotificationChannel with a unique ID and name (required for Android 8.0+)
         NotificationChannel notificationChannel =
                 new NotificationChannel(channelId, "PNR Responses", NotificationManager.IMPORTANCE_HIGH);
 
-// Configure the NotificationChannel's properties (optional)
         notificationChannel.setDescription("REG-RESP messages received, ready to send back to the iPhone");
         notificationChannel.enableLights(true);
         notificationChannel.setLightColor(Color.RED);
         notificationChannel.enableVibration(true);
 
-// Register the NotificationChannel with the system
         notificationManager.createNotificationChannel(notificationChannel);
-
         notificationManager.cancelAll();
 
 
 
+        //Sets up the notification with REG-RESP message data
         Intent copyIntent = new Intent(context, NotificationActionBroadcastReceiver.class);
         copyIntent.setAction("COPY_TO_CLIPBOARD");
         copyIntent.putExtra("textToCopy", messageBody);
 
         PendingIntent copyPendingIntent = PendingIntent.getBroadcast(context, 0, copyIntent, PendingIntent.FLAG_IMMUTABLE);
 
-
-
-// Create a NotificationCompat.Builder object
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.drawable.ic_baseline_sim_card_24) // Set the notification icon
                 .setContentTitle("REG-RESP Message Received!") // Set the notification title
@@ -66,22 +58,17 @@ public class SMSReceiver extends BroadcastReceiver {
                 .setPriority(NotificationCompat.PRIORITY_HIGH) // Set the notification priority
                 .addAction(R.drawable.ic_baseline_sim_card_24, "Copy", copyPendingIntent);
 
-
         Random rand = new Random();
-
-// Create a unique notification ID for your notification
-//        int notificationId = (int) (System.currentTimeMillis() / 1000);
         int notificationId = rand.nextInt(100000);
-
-// Build the notification and send it
         notificationManager.notify(notificationId, builder.build());
 
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        //This runs whenever an SMS is received--i.e. to capture the incoming REG-REQ message from the iPhone so
-        //  we can forward it on to the gateway address (the Apple registration phone number)
+        //This runs whenever a regular SMS is received--i.e. to capture the incoming REG-REQ message from the iPhone so
+        //  we can notify the user. The user should then paste the REG-RESP contents into the ReceivePNR command
+        //  on the iPhone via SSH
         Log.d("SMSRECEIVER", "Received intent!");
 
         mPrefs = PreferenceManager.getDefaultSharedPreferences(context);
@@ -90,54 +77,16 @@ public class SMSReceiver extends BroadcastReceiver {
 
         for (int i = 0; i < extractMessages.length; i++) {
 
-            //Loops through each message and prints out some basic information for debugging
-            Log.d("SMSRECEIVER", extractMessages[i].toString());
-            Log.d("SMSRECEIVER", "\tMessage body: "+extractMessages[i].getMessageBody());
-            Log.d("SMSRECEIVER", "\tMessage class: "+String.valueOf(extractMessages[i].getMessageClass()));
-            Log.d("SMSRECEIVER", "\tMessage PDU: "+extractMessages[i].getPdu().toString());
-            Log.d("SMSRECEIVER", "\tDisplay message body: "+extractMessages[i].getDisplayMessageBody());
-
-            Log.d("SMSRECEIVER", "\tOriginating address: "+extractMessages[i].getOriginatingAddress());
-            Log.d("SMSRECEIVER", "\tDisplay originating address: "+extractMessages[i].getDisplayOriginatingAddress());
-            Log.d("SMSRECEIVER", "\tEmail body: "+extractMessages[i].getEmailBody());
-            Log.d("SMSRECEIVER", "\tEmail from: "+extractMessages[i].getEmailFrom());
-
-            Log.d("SMSRECEIVER", "\tPseudo-subject: "+extractMessages[i].getPseudoSubject());
-            Log.d("SMSRECEIVER", "\tService center address: "+extractMessages[i].getServiceCenterAddress());
-            Log.d("SMSRECEIVER", "\tIndex on ICC: "+String.valueOf(extractMessages[i].getIndexOnIcc()));
-
-            Log.d("SMSRECEIVER", "\tProtocol identifier: "+String.valueOf(extractMessages[i].getProtocolIdentifier()));
-            Log.d("SMSRECEIVER", "\tStatus: "+String.valueOf(extractMessages[i].getStatus()));
-            Log.d("SMSRECEIVER", "\tUser data: "+String.valueOf(extractMessages[i].getUserData()));
-
-            if (mPrefs.getString("gateway_address","none").equals("none")) {
+            if (mPrefs.getString("gateway_address","").trim().equals("")) {
                 Toast.makeText(context, "Error: Please set the gateway address in Settings", Toast.LENGTH_SHORT).show();
                 continue;
             }
 
-//            if (mPrefs.getString("iphone_number","none").equals("none")) {
-//                Toast.makeText(context, "Error: Please set the iPhone number in Settings", Toast.LENGTH_SHORT).show();
-//                continue;
-//            }
-
-
-//            if (extractMessages[i].getOriginatingAddress().equals(mPrefs.getString("iphone_number","none"))) {
-//                //Any message coming from the iPhone gets forwarded to the gateway address
-//                SmsManager smsManager = SmsManager.getDefault();
-//                smsManager.sendTextMessage(mPrefs.getString("gateway_address","none"), null, extractMessages[i].getMessageBody(), null, null);
-//
-//            }
-
-            Log.d("SMS_RCVR","Checking "+extractMessages[i].getOriginatingAddress()+" against "+mPrefs.getString("gateway_address","none"));
-
             if (extractMessages[i].getOriginatingAddress().equals(mPrefs.getString("gateway_address","none"))) {
 
-                Log.d("SMS_RCVR","It came from the gateway! Sending back...");
-
+                Log.d("SMS_RCVR","Got message from gateway, notifying...");
                 processResponseMessage(extractMessages[i].getMessageBody(), context);
 
-//                SmsManager smsManager = SmsManager.getDefault();
-//                smsManager.sendTextMessage(mPrefs.getString("iphone_number","none"), null, extractMessages[i].getMessageBody(), null, null);
             }
 
         }
