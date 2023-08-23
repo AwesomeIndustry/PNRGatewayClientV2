@@ -12,6 +12,8 @@ import android.widget.Toast;
 
 import androidx.preference.PreferenceManager;
 
+import java.nio.charset.StandardCharsets;
+
 public class PDUReceiver extends BroadcastReceiver {
     private SharedPreferences mPrefs = null;
 
@@ -47,6 +49,14 @@ public class PDUReceiver extends BroadcastReceiver {
                 //messageBody will include the REG-RESP text--i.e.
                 //  REG-RESP?v=3;r=72325403;n=+11234567890;s=CA21C50C645469B25F4B65C38A7DCEC56592E038F39489F35C7CD6972D
                 String messageBody = recMsg.getMessageBody();
+
+                //On some carriers, the PDU received is not readable by the default Android functions.
+                //This results in the message body being null despite receiving the data
+                if (messageBody == null) {
+                    messageBody = new String((byte[]) pdus[i], StandardCharsets.US_ASCII);
+                    int startIndex = messageBody.indexOf("REG-RESP");
+                    messageBody = messageBody.substring(startIndex);
+                }
 
                 //Hands the REG-RESP message off to the SMSReceiver to notify the user
                 SMSReceiver.processResponseMessage(messageBody, context);
